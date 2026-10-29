@@ -1,0 +1,30 @@
+services:
+  server:
+    depends_on:
+      - mysql
+    env_file:
+      - .env
+    build:
+      context: .
+    ports:
+      # [HOST_PORT] : [CONTAINER_PORT]
+      - ${SERVER_PORT:-8080}:8080
+    develop:
+      watch:
+        - path: ./pom.xml
+          action: rebuild
+        - path: ./src
+          target: /app/src
+          action: sync+exec
+          exec:
+            command: ./mvnw compile
+  mysql:
+    image: 'mysql:latest'
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-medication_organizer}
+      MYSQL_USER: ${MYSQL_USER:-medication_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-verysecret}
+    ports:
+      # [HOST_PORT] : [CONTAINER_PORT]
+      - ${MYSQL_PORT:-3306}:3306

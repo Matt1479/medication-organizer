@@ -1,3 +1,25 @@
+server:
+  port: ${SERVER_PORT:8080}
+
 spring:
   application:
     name: medication-organizer
+  
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:mysql}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:medication_organizer}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+
+  jpa:
+    hibernate:
+      # Create (or update) the database on startup if needed
+      ddl-auto: update
+    show-sql: true
+  
+jwt:
+  issuer: medication-organizer
+  ttl-minutes: ${JWT_TTL_MINUTES:60}
+
+rsa:
+  private-key: ${JWT_PRIVATE_KEY:classpath:certs/private.pem}
+  public-key: ${JWT_PUBLIC_KEY:classpath:certs/public.pem}
