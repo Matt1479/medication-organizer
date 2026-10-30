@@ -31,14 +31,17 @@ The API base URL is `http://localhost:8080`.
 
 ## MVP scope
 
-- Registration, login, profile, and synchronized preferences.
+- Registration, login, user profiles, and accessibility preferences.
 - QR/product-code lookup and manual selection of supported organizer models.
 - User-to-organizer assignments and compartment layouts.
-- Medication records, recurring schedules, daily/weekly plans, and intake history.
-- Organizer preparation progress and ready-state validation.
+- Medication records, recurring schedules, daily/weekly plans, and dose occurrences.
+- User-reported intake records and history.
+- Organizer preparation sessions and compartment preparation progress.
 - Backend validation, per-user authorization, and automated tests.
 
-Organizer photo analysis is Stage II; caregiver access and shared history are Stage III. Neither is part of the MVP.
+The current database design does not include persistent reminder snoozes, timezone/locale preferences, photo verification, or caregiver access. These can be introduced in later iterations as requirements are finalized.
+
+Organizer photo analysis is Stage II; caregiver access and shared history are Stage III.
 
 ## Tech stack
 
@@ -67,13 +70,13 @@ Base package: `com.matt1479.medicationorganizer`
 | `config` | Security, JWT keys, password encoding, application configuration |
 | `security` | Current-user lookup and reusable ownership checks |
 | `users` | User account and profile |
-| `preferences` | Timezone, locale, accessibility, and reminder preferences |
+| `preferences` | Accessibility and UI preferences |
 | `organizers` | Organizer-model catalog, compartment definitions, QR lookup, user assignments |
 | `medications` | Medication data and recurring schedule rules |
 | `schedule` | Date-specific dose occurrences and daily/weekly plans |
 | `preparation` | Preparation sessions and compartment progress |
 | `intake` | Taken/skipped records and history |
-| `reminders` | Snooze state and reminder-related logic; the mobile OS displays local notifications |
+| `reminders` | Reserved for future backend reminder functionality; MVP notifications and snoozing are handled by the mobile client/OS |
 | `common` | Shared error handling and API error DTOs |
 
 Keep controllers focused on HTTP/DTO handling, services responsible for business rules and ownership checks, and repositories responsible for persistence. Do not expose JPA entities directly from controllers. The detailed class/entity model and API contract are in [`design.md`](docs/design.md).
@@ -89,7 +92,7 @@ Implement and merge each branch into `main` before starting the next. This seque
 | 3 | `feat/jwt-authentication` | Registration/login, BCrypt, RSA JWT signing/validation, security configuration |
 | 4 | `feat/organizers` | Organizer catalog, compartment definitions, QR lookup, user assignments |
 | 5 | `feat/medications` | Medication records and recurring schedule rules |
-| 6 | `feat/daily-plan-intake` | Dose occurrence generation, daily/weekly plan, intake history, snooze state |
+| 6 | `feat/daily-plan-intake` | Dose occurrence generation, daily/weekly plans, intake history |
 | 7 | `feat/preparation` | Preparation sessions, compartment progress, ready-state validation |
 | 8 | `test/integration` | MySQL Testcontainers, JWT, ownership, scheduling, and state-transition tests |
 | 9 | `docs/readme-design` | Finalize documentation against the implemented API |
