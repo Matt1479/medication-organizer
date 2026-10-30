@@ -25,13 +25,14 @@ Types are conceptual Java types. `Long` is assumed for identifiers; use `Instant
 | --- | --- | --- |
 | `id` | `Long` | Primary key |
 | `email` | `String` | Required, unique, normalized |
-| `passwordHash` | `String` | BCrypt hash; never returned by the API |
+| `passwordHash` | `String` | Required password hash; never returned by the API |
 | `displayName` | `String` | Profile name |
-| `role` | `UserRole` | MVP: `USER` |
 | `enabled` | `boolean` | Account enabled state |
 | `createdAt`, `updatedAt` | `Instant` | Audit timestamps |
 
-Relationships: one user has one `UserPreferences`, and can have multiple `UserOrganizer` assignments and `Medication` records.
+User roles are stored separately in `UserRole`, represented by the `user_roles` table. A user can have multiple roles, with `USER` as the default role.
+
+Relationships: one user has multiple roles, one `UserPreferences`, and can have multiple `UserOrganizer` assignments and `Medication` records.
 
 ### UserPreferences
 
@@ -39,13 +40,12 @@ Relationships: one user has one `UserPreferences`, and can have multiple `UserOr
 | --- | --- | --- |
 | `id` | `Long` | Primary key |
 | `userId` | `Long` | Unique foreign key to `User` |
-| `timeZone` | `String` | IANA zone ID, e.g. `Europe/Warsaw` |
-| `locale` | `String` | BCP 47 tag, e.g. `pl-PL` |
 | `simplifiedMode` | `boolean` | Simplified UI preference |
-| `textScale` | `Integer` | Optional frontend-interpreted preference |
-| `highContrast` | `boolean` | Contrast preference |
-| `reminderSoundEnabled`, `vibrationEnabled`, `spokenPromptsEnabled` | `boolean` | Reminder/accessibility preferences |
+| `textScale` | `Integer` | Text scaling preference |
+| `highContrast` | `boolean` | High-contrast UI preference |
 | `updatedAt` | `Instant` | Last update |
+
+Timezone, locale, and reminder delivery preferences are not currently represented in the database design. They may be added if required by later application features.
 
 Device-specific rendering and notification delivery remain client/OS responsibilities.
 
@@ -60,6 +60,7 @@ Device-specific rendering and notification delivery remain client/OS responsibil
 | `description` | `String` | Optional description |
 | `daysCovered`, `compartmentsPerDay` | `Integer` | Model layout metadata |
 | `active` | `boolean` | Available for new assignments |
+| `createdAt` | `Instant` | Record creation timestamp |
 
 QR codes identify a product/model or registered product identifier, not a user or their permissions.
 
@@ -74,7 +75,7 @@ QR codes identify a product/model or registered product identifier, not a user o
 | `dayOfWeek` | `DayOfWeek` | Nullable for non-day-oriented models |
 | `timeOfDay` | `TimeOfDay` | E.g. `MORNING`, `NOON`, `EVENING`; nullable if not applicable |
 
-Constraint: unique `(organizerModelId, positionIndex)`. Do not hard-code a 7 × 3 layout for every organizer model.
+Constraint: unique `(organizerModelId, positionIndex)`.
 
 ### UserOrganizer
 
@@ -87,7 +88,7 @@ Constraint: unique `(organizerModelId, positionIndex)`. Do not hard-code a 7 × 
 | `active`, `isDefault` | `boolean` | Assignment and default selection state |
 | `assignedAt` | `Instant` | Assignment time |
 
-Enforce a single default organizer per user. If individual physical units must be tracked later, add a separate instance/serial identifier.
+Enforce at most one active default organizer per user in the service layer. If individual physical units must be tracked later, add a separate instance/serial identifier.
 
 ### Medication
 
@@ -96,14 +97,17 @@ Enforce a single default organizer per user. If individual physical units must b
 | `id` | `Long` | Primary key |
 | `userId` | `Long` | Foreign key to `User` |
 | `name` | `String` | User-entered name |
-| `strength` | `String` | Optional descriptive strength |
+| `strengthValue` | `BigDecimal` | Optional numeric medication strength |
+| `strengthUnit` | `String` | Optional strength unit |
 | `form` | `MedicationForm` | E.g. `TABLET`, `CAPSULE`, `LIQUID`, `OTHER` |
 | `doseAmount` | `BigDecimal` | Positive amount per scheduled occurrence |
 | `doseUnit` | `String` | E.g. `TABLET`, `CAPSULE`, `ML` |
-| `imageReference` | `String` | Optional storage key/URL |
-| `startDate`, `endDate` | `LocalDate` | End date nullable |
+| `startDate` | `LocalDate` | Required start date |
+| `endDate` | `LocalDate` | Optional end date |
 | `status` | `MedicationStatus` | `ACTIVE`, `SUSPENDED`, `INACTIVE` |
 | `createdAt`, `updatedAt` | `Instant` | Audit timestamps |
+
+The current database design does not include a medication image reference. This can be introduced later if medication image storage becomes necessary.
 
 This is a user-owned record, not a medication catalogue or prescribing system. Do not use floating-point types for dose quantities.
 
@@ -114,11 +118,15 @@ This is a user-owned record, not a medication catalogue or prescribing system. D
 | `id` | `Long` | Primary key |
 | `medicationId` | `Long` | Foreign key to `Medication` |
 | `validFrom`, `validUntil` | `LocalDate` | Effective date range; end nullable |
-| `daysOfWeek` | `Set<DayOfWeek>` or child rows | Selected weekdays |
-| `times` | `List<LocalTime>` or child rows | One or more daily times |
-| `createdAt`, `supersededAt` | `Instant` | Version/audit timestamps; `supersededAt` nullable |
+| `createdAt` | `Instant` | Record creation timestamp |
+| `replacedAt` | `Instant` | Timestamp when the schedule was replaced; nullable |
 
-Prefer normalized child tables for schedule days and times. Preserve schedule versions or snapshot enough data to explain historical occurrences.
+Schedule weekdays and times are stored in separate child tables:
+
+- `ScheduleDay`: composite key of `scheduleId` and `dayOfWeek`.
+- `ScheduleTime`: individual scheduled time, with an optional `timeOfDay` category.
+
+A schedule can contain multiple weekdays and multiple times. Preserve previous schedule versions so historical occurrences remain explainable.
 
 ### DoseOccurrence
 
@@ -126,7 +134,7 @@ Prefer normalized child tables for schedule days and times. Preserve schedule ve
 | --- | --- | --- |
 | `id` | `Long` | Primary key |
 | `userId`, `medicationId`, `scheduleId` | `Long` | Owner and source references |
-| `organizerId` | `Long` | Optional foreign key to `UserOrganizer` |
+| `userOrganizerId` | `Long` | Optional foreign key to `UserOrganizer` |
 | `compartmentDefinitionId` | `Long` | Optional intended compartment |
 | `scheduledDate` | `LocalDate` | Local calendar date |
 | `scheduledTime` | `LocalTime` | Planned local time |
@@ -134,6 +142,7 @@ Prefer normalized child tables for schedule days and times. Preserve schedule ve
 | `doseAmountSnapshot` | `BigDecimal` | Planned amount snapshot |
 | `doseUnitSnapshot` | `String` | Planned unit snapshot |
 | `createdAt` | `Instant` | Creation time |
+| `updatedAt` | `Instant` | Last update timestamp |
 
 Prevent duplicate generation for the same schedule/date/time. Choose one idempotent occurrence-generation strategy. `MISSED` needs an explicitly defined grace-period rule.
 
@@ -144,10 +153,11 @@ Prevent duplicate generation for the same schedule/date/time. Choose one idempot
 | `id` | `Long` | Primary key |
 | `doseOccurrenceId` | `Long` | Foreign key to `DoseOccurrence` |
 | `status` | `IntakeStatus` | `TAKEN` or `SKIPPED` |
-| `occurredAt`, `recordedAt` | `Instant` | User-reported and server-recorded times |
-| `note` | `String` | Optional, length-limited note |
+| `occurredAt` | `Instant` | Nullable user-reported event time |
+| `recordedAt` | `Instant` | Server-recorded timestamp |
+| `note` | `String` | Optional note |
 
-Treat intake as user-reported information, not proof of ingestion. Prevent accidental duplicate submissions and avoid silently overwriting historical confirmations.
+A dose occurrence can have multiple intake records. Treat these as user-reported events, not proof of ingestion. Define an application-level policy for duplicate submissions and corrections.
 
 ### PreparationSession
 
@@ -175,7 +185,7 @@ Completing a session must transactionally verify all required compartments have 
 
 Constraint: unique `(preparationSessionId, compartmentDefinitionId)`. An intentionally empty compartment is not the same as an unchecked compartment.
 
-### ReminderSnooze (optional for MVP)
+### ReminderSnooze (future, not MVP)
 
 | Field | Type | Notes |
 | --- | --- | --- |
@@ -194,47 +204,213 @@ Persist snoozes only if the backend needs cross-device consistency or history; o
 
 ## 3. Relationships and persistence rules
 
+- `User` 1-N `UserRole`.
 - `User` 1-1 `UserPreferences`.
 - `User` 1-N `UserOrganizer` and `Medication`.
 - `OrganizerModel` 1-N `CompartmentDefinition` and `UserOrganizer`.
-- `Medication` 1-N `MedicationSchedule` and `DoseOccurrence`.
+- `Medication` 1-N `MedicationSchedule`.
+- `MedicationSchedule` 1-N `ScheduleDay` and `ScheduleTime`.
 - `MedicationSchedule` 1-N `DoseOccurrence`.
-- `DoseOccurrence` 1-N or 1-1 `IntakeRecord`, depending on whether corrections are represented as append-only history; choose one explicit policy.
-- `UserOrganizer` 1-N `PreparationSession`; `PreparationSession` 1-N `CompartmentPreparation`.
+- `Medication` 1-N `DoseOccurrence`.
+- `UserOrganizer` 1-N `DoseOccurrence` (optional association).
+- `CompartmentDefinition` 1-N `DoseOccurrence` (optional association).
+- `DoseOccurrence` 1-N `IntakeRecord`.
+- `UserOrganizer` 1-N `PreparationSession`.
+- `PreparationSession` 1-N `CompartmentPreparation`.
 
-Use foreign keys, unique constraints, and transactions alongside application validation. Prefer soft deactivation when historical records depend on a medication or assignment. Do not cascade-delete intake/history records as a side effect of ordinary edits.
+Use foreign keys, unique constraints, and transactions alongside application validation. Preserve historical dose occurrences and intake records when schedules or medication details change.
 
 ## 4. API contract
 
-Base path: `/api`. This is the proposed MVP contract; catalog read access should be configured consistently as public or authenticated. All user-owned resources require ownership checks.
+Base path: `/api`. Registration and login are public; other endpoints require a valid bearer JWT. All user-owned resources require ownership checks. Organizer-model catalog reads are public.
 
 | Method | Route | Purpose |
 | --- | --- | --- |
 | `POST` | `/api/auth/register` | Register a user |
 | `POST` | `/api/auth/login` | Authenticate and issue JWT |
-| `GET`, `PATCH` | `/api/users/me` | Read/update current profile |
+| `GET`, `PATCH` | `/api/users/me` | Read/update profile |
 | `GET`, `PUT` | `/api/users/me/preferences` | Read/replace preferences |
-| `GET` | `/api/organizer-models` | List supported models; optional `qrCode` query for lookup |
+| `GET` | `/api/organizer-models` | List models; optional `qrCode` or `productCode` lookup |
 | `GET` | `/api/organizer-models/{id}` | Read model and compartment layout |
 | `GET`, `POST` | `/api/users/me/organizers` | List/assign organizers |
-| `PATCH`, `DELETE` | `/api/users/me/organizers/{id}` | Update/remove an assignment |
-| `POST`, `GET` | `/api/medications` | Create/list medications |
-| `GET`, `PUT`, `DELETE` | `/api/medications/{id}` | Read/update/deactivate a medication |
-| `PATCH` | `/api/medications/{id}/suspension` | Suspend/resume a medication |
-| `PUT` | `/api/medications/{id}/schedule` | Replace schedule rules |
-| `GET` | `/api/plan/daily?date=YYYY-MM-DD&organizerId=...` | Read daily plan |
-| `GET` | `/api/plan/weekly?weekStart=YYYY-MM-DD&organizerId=...` | Read weekly plan |
-| `GET` | `/api/dose-occurrences/{id}` | Read one planned occurrence |
-| `POST` | `/api/dose-occurrences/{id}/intake` | Record taken/skipped outcome |
-| `POST` | `/api/dose-occurrences/{id}/snooze` | Request a reminder snooze |
-| `GET` | `/api/intake?from=...&to=...` | Query intake history |
-| `POST` | `/api/organizers/{id}/preparations` | Start preparation session |
-| `GET` | `/api/organizers/{id}/preparations/current` | Read current progress |
+| `GET`, `PATCH`, `DELETE` | `/api/users/me/organizers/{id}` | Read/update/remove assignment |
+| `GET`, `POST` | `/api/medications` | List/create medications |
+| `GET`, `PATCH` | `/api/medications/{id}` | Read/update medication |
+| `PATCH` | `/api/medications/{id}/status` | Change medication status |
+| `PUT` | `/api/medications/{id}/schedule` | Replace complete schedule |
+| `GET` | `/api/plan/daily?date=YYYY-MM-DD&organizerId={id}` | Read daily plan |
+| `GET` | `/api/plan/weekly?weekStart=YYYY-MM-DD&organizerId={id}` | Read weekly plan |
+| `GET` | `/api/dose-occurrences/{id}` | Read one occurrence |
+| `POST` | `/api/dose-occurrences/{id}/intake` | Add intake record |
+| `GET` | `/api/intake?from=YYYY-MM-DD&to=YYYY-MM-DD` | Query intake history |
+| `POST` | `/api/users/me/organizers/{id}/preparations` | Start preparation |
+| `GET` | `/api/users/me/organizers/{id}/preparations/current` | Read current preparation |
 | `GET` | `/api/preparations/{id}` | Read preparation session |
 | `PATCH` | `/api/preparations/{id}/compartments/{compartmentId}` | Update compartment status |
 | `POST` | `/api/preparations/{id}/complete` | Complete after validation |
 
-Later-stage photo and caregiver endpoints are deliberately excluded from the MVP contract.
+Here, organizer `{id}` refers to a `UserOrganizer` assignment. The compartment update must verify that the compartment belongs to that assignment's organizer model.
+
+### Request/response examples
+
+Examples use abbreviated IDs and fields for clarity.
+
+**Register — `POST /api/auth/register`**
+
+Request:
+```json
+{
+  "email": "user@example.com",
+  "password": "secure-password",
+  "displayName": "Alex"
+}
+```
+
+Response `201`:
+```json
+{
+  "id": 1,
+  "email": "user@example.com",
+  "displayName": "Alex"
+}
+```
+
+**Login — `POST /api/auth/login`**
+
+Request:
+```json
+{
+  "email": "user@example.com",
+  "password": "secure-password"
+}
+```
+
+Response `200`:
+```json
+{
+  "accessToken": "<jwt>",
+  "tokenType": "Bearer",
+  "expiresIn": 3600
+}
+```
+
+**Create medication — `POST /api/medications`**
+
+Request:
+```json
+{
+  "name": "Example medication",
+  "strengthValue": 500,
+  "strengthUnit": "mg",
+  "doseAmount": 1,
+  "doseUnit": "TABLET",
+  "startDate": "2026-10-30",
+  "endDate": null
+}
+```
+
+Response `201`:
+```json
+{
+  "id": 12,
+  "name": "Example medication",
+  "status": "ACTIVE"
+}
+```
+
+**Replace schedule — `PUT /api/medications/12/schedule`**
+
+Request:
+```json
+{
+  "validFrom": "2026-10-30",
+  "validUntil": null,
+  "days": [1, 3, 5],
+  "times": [
+    {
+      "time": "08:00",
+      "timeOfDay": "MORNING"
+    },
+    {
+      "time": "20:00",
+      "timeOfDay": "EVENING"
+    }
+  ]
+}
+```
+
+Response `200`:
+```json
+{
+  "id": 25,
+  "medicationId": 12,
+  "validFrom": "2026-10-30",
+  "validUntil": null,
+  "days": [1, 3, 5],
+  "times": [
+    {
+      "time": "08:00",
+      "timeOfDay": "MORNING"
+    },
+    {
+      "time": "20:00",
+      "timeOfDay": "EVENING"
+    }
+  ]
+}
+```
+
+**Record intake — `POST /api/dose-occurrences/50/intake`**
+
+Request:
+```json
+{
+  "status": "TAKEN",
+  "occurredAt": "2026-10-30T08:05:00Z",
+  "note": null
+}
+```
+
+Response `201`:
+```json
+{
+  "id": 90,
+  "doseOccurrenceId": 50,
+  "status": "TAKEN",
+  "occurredAt": "2026-10-30T08:05:00Z",
+  "recordedAt": "2026-10-30T08:06:00Z"
+}
+```
+
+**Update compartment — `PATCH /api/preparations/30/compartments/8`**
+
+Request:
+```json
+{
+  "status": "PREPARED",
+  "note": null
+}
+```
+
+Response `200`:
+```json
+{
+  "id": 100,
+  "compartmentDefinitionId": 8,
+  "status": "PREPARED",
+  "checkedAt": "2026-10-30T08:00:00Z"
+}
+```
+
+### General rules
+
+- Use JSON request/response bodies and ISO 8601 timestamps.
+- Use `400` for invalid input, `401` for missing/invalid authentication, `403` for insufficient permissions, `404` for missing or inaccessible resources, and `409` for state/uniqueness conflicts.
+- Use `201` for resource creation, `200` for successful reads/updates, and `204` when no response body is needed.
+- Never expose password hashes or internal security details.
+- Preserve historical occurrences and intake records when schedules or medications change.
+- The current schema does not persist timezone or snooze state. Scheduling uses local dates/times; reminder snoozing is client-side in the MVP.
+- Later-stage photo verification and caregiver endpoints are excluded.
 
 ## 5. Authentication and authorization
 
@@ -252,11 +428,11 @@ Organizer-model catalog records are shared reference data; `UserOrganizer` is th
 ## 6. Scheduling and state rules
 
 - A `MedicationSchedule` is a recurring rule; a `DoseOccurrence` is a date-specific planned dose. Schedule changes must not rewrite past occurrences or intake records.
-- Store a user's IANA timezone (e.g. `Europe/Warsaw`); schedules use local dates/times, while actual event timestamps use `Instant`.
+- The MVP does not persist a user timezone. Schedule dates and times are interpreted as local calendar values. Store an IANA timezone (e.g. `Europe/Warsaw`) in `UserPreferences` before implementing timezone-aware scheduling and daylight-saving handling.
 - Define daylight-saving gap/overlap behavior before implementing occurrence generation.
-- The mobile OS/client displays local notifications in the MVP. The API can persist snooze requests but cannot guarantee notification delivery while the client is offline or notifications are disabled.
+- The mobile OS/client handles notifications and snoozing in the MVP. Persistent backend snooze state is deferred.
 - Keep medication state (`ACTIVE`, `SUSPENDED`, `INACTIVE`), dose state (`PENDING`, `TAKEN`, `SKIPPED`, `MISSED`), preparation state, and any future image-verification state separate.
-- Validate positive dose amounts, date ranges, valid schedule weekdays/times, future/allowed snooze times, and preparation completeness.
+- Validate positive dose amounts, date ranges, valid schedule weekdays/times, and preparation completeness.
 
 ## 7. Errors and testing
 
@@ -272,4 +448,4 @@ Test at minimum:
 - Ownership isolation for every resource family.
 - JWT signature, expiry, and malformed/missing tokens.
 - MySQL persistence constraints using Testcontainers.
-- User timezone and daylight-saving boundaries.
+- Schedule date/time boundaries and, when timezone support is implemented, daylight-saving transitions.
