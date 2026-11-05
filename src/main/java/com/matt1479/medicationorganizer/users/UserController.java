@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.matt1479.medicationorganizer.security.CurrentUser;
 import com.matt1479.medicationorganizer.users.dto.ChangeDisplayNameRequest;
 import com.matt1479.medicationorganizer.users.dto.ChangeEmailRequest;
 import com.matt1479.medicationorganizer.users.dto.ChangePasswordRequest;
@@ -32,9 +33,11 @@ import jakarta.validation.constraints.Size;
 public class UserController {
 
     private final UserService userService;
+    private final CurrentUser currentUser;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, CurrentUser currentUser) {
         this.userService = userService;
+        this.currentUser = currentUser;
     }
 
     @PostMapping
@@ -64,8 +67,7 @@ public class UserController {
     @PatchMapping("/change-email")
     public UserResponse changeEmail(@RequestBody @Valid ChangeEmailRequest request) {
         return userService.changeEmail(
-                // TODO: Replace placeholder ID with the authenticated user's ID
-                0L,
+                currentUser.getId(),
                 request.currentPassword(),
                 request.newEmail());
     }
@@ -73,8 +75,7 @@ public class UserController {
     @PatchMapping("/change-display-name")
     public UserResponse changeDisplayName(@RequestBody @Valid ChangeDisplayNameRequest request) {
         return userService.changeDisplayName(
-                // TODO: Replace placeholder ID with the authenticated user's ID
-                0L,
+                currentUser.getId(),
                 request.currentPassword(),
                 request.newDisplayName());
     }
@@ -82,8 +83,7 @@ public class UserController {
     @PatchMapping("/change-password")
     public UserResponse changePassword(@RequestBody @Valid ChangePasswordRequest request) {
         return userService.changePassword(
-                // TODO: Replace placeholder ID with the authenticated user's ID
-                0L,
+                currentUser.getId(),
                 request.currentPassword(),
                 request.newPassword());
     }
