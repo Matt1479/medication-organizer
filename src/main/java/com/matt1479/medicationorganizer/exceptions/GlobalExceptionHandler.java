@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.matt1479.medicationorganizer.exceptions.dto.ErrorResponse;
 
@@ -157,6 +158,17 @@ public class GlobalExceptionHandler {
         return createErrorResponse(
                 HttpStatus.FORBIDDEN,
                 "You do not have permission to perform this action",
+                request.getRequestURI());
+    }
+
+    /* This method handles requests for resources that do not exist. */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFoundException(
+            HttpServletRequest request) {
+
+        return createErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "The requested resource was not found",
                 request.getRequestURI());
     }
 
