@@ -189,6 +189,11 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "User not found"));
 
+        if (user.getRoles().contains(role)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "User already has this role");
+        }
+
         user.addRole(role);
 
         User updatedUser = userRepository.save(user);
@@ -200,6 +205,11 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "User not found"));
+
+        if (!user.getRoles().contains(role)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "User does not have this role");
+        }
 
         user.removeRole(role);
 
