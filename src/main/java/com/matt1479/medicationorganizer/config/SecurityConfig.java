@@ -54,8 +54,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement((s) -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2ResourceServer((oauth2) -> oauth2.jwt((jwt) -> jwt
-                        .jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .oauth2ResourceServer((oauth2) -> oauth2
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .jwt((jwt) -> jwt
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .exceptionHandling((exception) -> exception
                         .accessDeniedHandler(customAccessDeniedHandler)
                         .authenticationEntryPoint(customAuthenticationEntryPoint))
