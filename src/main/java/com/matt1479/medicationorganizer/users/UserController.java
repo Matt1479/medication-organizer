@@ -105,11 +105,11 @@ public class UserController {
         return userService.addRole(id, request.role());
     }
 
-    @DeleteMapping("/{id}/roles/{role}")
+    @DeleteMapping("/{id}/roles")
     public UserResponse removeRole(
             @PathVariable @Min(1) Long id,
-            @PathVariable Role role) {
-        return userService.removeRole(id, role);
+            @RequestBody @Valid RoleRequest request) {
+        return userService.removeRole(id, request.role());
     }
 
 }
