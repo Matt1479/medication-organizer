@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory
             .getLogger(GlobalExceptionHandler.class);
 
-    /* This method handles invalid method parameters */
+    /* Handles invalid method parameters */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolationException(
             ConstraintViolationException exception,
@@ -80,7 +80,7 @@ public class GlobalExceptionHandler {
     }
 
     /*
-     * This method handles invalid request bodies, such as missing required fields
+     * Handles invalid request bodies, such as missing required fields
      * or invalid email addresses.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -104,7 +104,7 @@ public class GlobalExceptionHandler {
     }
 
     /*
-     * This method handles malformed or unreadable request bodies.
+     * Handles malformed or unreadable request bodies.
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
@@ -117,7 +117,7 @@ public class GlobalExceptionHandler {
     }
 
     /*
-     * This method handles requests made with unsupported HTTP methods.
+     * Handles requests made with unsupported HTTP methods.
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleMethodNotSupportedException(
@@ -130,7 +130,7 @@ public class GlobalExceptionHandler {
     }
 
     /*
-     * This method handles failed login attempts caused by invalid credentials.
+     * Handles failed login attempts caused by invalid credentials.
      */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(
@@ -146,7 +146,7 @@ public class GlobalExceptionHandler {
     }
 
     /*
-     * This method handles authorization exceptions that reach Spring MVC's
+     * Handles authorization exceptions that reach Spring MVC's
      * exception-handling mechanism.
      */
     @ExceptionHandler(AuthorizationDeniedException.class)
@@ -161,7 +161,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI());
     }
 
-    /* This method handles requests for resources that do not exist. */
+    /* Handles requests for resources that do not exist. */
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoResourceFoundException(
             HttpServletRequest request) {
@@ -172,7 +172,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI());
     }
 
-    /* This method preserves the status codes and messages defined in services. */
+    /* Preserves the status codes and messages defined in services. */
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ErrorResponse> handleResponseStatusException(
             ResponseStatusException exception,
@@ -188,7 +188,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI());
     }
 
-    /* This method handles generic exceptions. */
+    /* Handles generic exceptions. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpectedException(
             Exception exception,
