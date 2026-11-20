@@ -71,7 +71,7 @@ public class Compartment {
     @Override
     public String toString() {
         return String.format(
-                "Compartment=[id=%s, positionIndex=%s, dayOfWeek='%s', timeOfDay='%s', timeFrom='%s', timeTo='%s']",
+                "Compartment[id=%s, positionIndex=%s, dayOfWeek='%s', timeOfDay='%s', timeFrom='%s', timeTo='%s']",
                 id, positionIndex, dayOfWeek, timeOfDay, timeFrom, timeTo);
     }
 

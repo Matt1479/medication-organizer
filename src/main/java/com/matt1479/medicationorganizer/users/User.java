@@ -65,11 +65,11 @@ public class User {
 
     public User(String email, String displayName, String passwordHash) {
         if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email is required");
+            throw new IllegalArgumentException("Email is required.");
         }
 
         if (passwordHash == null || passwordHash.isBlank()) {
-            throw new IllegalArgumentException("PasswordHash is required");
+            throw new IllegalArgumentException("Password hash is required.");
         }
 
         this.email = email.trim().toLowerCase();
@@ -81,7 +81,7 @@ public class User {
     @Override
     public String toString() {
         return String.format(
-            "User=[id=%s, email='%s', displayName='%s', enabled=%s, createdAt=%s, updatedAt=%s, roles=%s]",
+            "User[id=%s, email='%s', displayName='%s', enabled=%s, createdAt=%s, updatedAt=%s, roles=%s]",
             id, email, displayName, enabled, createdAt, updatedAt, roles
         );
     }
@@ -96,7 +96,7 @@ public class User {
 
     public void setEmail(String email) {
         if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email is required");
+            throw new IllegalArgumentException("Email is required.");
         }
 
         this.email = email.trim().toLowerCase();
@@ -116,7 +116,7 @@ public class User {
 
     public void setPasswordHash(String passwordHash) {
         if (passwordHash == null || passwordHash.isBlank()) {
-            throw new IllegalArgumentException("PasswordHash is required");
+            throw new IllegalArgumentException("Password hash is required.");
         }
 
         this.passwordHash = passwordHash;
@@ -148,11 +148,11 @@ public class User {
 
     public void addRole(Role role) {
         if (role == null) {
-            throw new IllegalArgumentException("Role cannot be null");
+            throw new IllegalArgumentException("Role cannot be null.");
         }
 
         if (this.roles.contains(role)) {
-            throw new IllegalArgumentException("Role is already present");
+            throw new IllegalArgumentException("Role is already present.");
         }
 
         this.roles.add(role);
@@ -160,15 +160,15 @@ public class User {
 
     public void removeRole(Role role) {
         if (role == null) {
-            throw new IllegalArgumentException("Role cannot be null");
+            throw new IllegalArgumentException("Role cannot be null.");
         }
 
         if (!this.roles.contains(role)) {
-            throw new IllegalArgumentException("Role is not present");
+            throw new IllegalArgumentException("Role is not present.");
         }
 
         if (this.roles.size() <= 1) {
-            throw new IllegalArgumentException("At least one role must be present");
+            throw new IllegalArgumentException("At least one role must be present.");
         }
 
         this.roles.remove(role);

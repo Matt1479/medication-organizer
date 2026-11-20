@@ -4,16 +4,13 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record UserRequest(
+public record UpdateEmailRequest(
+    @NotBlank
+    @Size(min = 8, max = 32)
+    String currentPassword,
+
     @NotBlank
     @Email
     @Size(min = 3, max = 254)
-    String email,
-
-    @Size(max = 32)
-    String displayName,
-
-    @NotBlank
-    @Size(min = 8, max = 32)
-    String password
+    String newEmail
 ) {}

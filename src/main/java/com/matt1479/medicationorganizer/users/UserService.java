@@ -29,7 +29,7 @@ public class UserService {
 
         if (userRepository.existsByEmail(email)) {
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "Email already exists");
+                    HttpStatus.CONFLICT, "Email already exists.");
         }
 
         displayName = displayName == null ? null : displayName.trim();
@@ -45,7 +45,7 @@ public class UserService {
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"));
+                        HttpStatus.NOT_FOUND, "User not found."));
 
         return toResponse(user);
     }
@@ -56,7 +56,7 @@ public class UserService {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"));
+                        HttpStatus.NOT_FOUND, "User not found."));
 
         return toResponse(user);
     }
@@ -75,23 +75,23 @@ public class UserService {
     public UserResponse changeEmail(Long id, String currentRawPassword, String newEmail) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"));
+                        HttpStatus.NOT_FOUND, "User not found."));
 
         newEmail = newEmail.trim().toLowerCase();
 
         if (!encoder.matches(currentRawPassword, user.getPasswordHash())) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Password is incorrect");
+                    HttpStatus.BAD_REQUEST, "Password is incorrect.");
         }
 
         if (user.getEmail().equals(newEmail)) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "New email must be different than current");
+                    HttpStatus.BAD_REQUEST, "New email must be different than current.");
         }
 
         if (userRepository.existsByEmail(newEmail)) {
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "Email already exists");
+                    HttpStatus.CONFLICT, "Email already exists.");
         }
 
         // TODO: Verify email
@@ -106,18 +106,18 @@ public class UserService {
     public UserResponse changeDisplayName(Long id, String currentRawPassword, String newDisplayName) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"));
+                        HttpStatus.NOT_FOUND, "User not found."));
 
         newDisplayName = newDisplayName == null ? null : newDisplayName.trim();
 
         if (!encoder.matches(currentRawPassword, user.getPasswordHash())) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Password is incorrect");
+                    HttpStatus.BAD_REQUEST, "Password is incorrect.");
         }
 
         if (Objects.equals(user.getDisplayName(), newDisplayName)) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "New displayName must be different than current");
+                    HttpStatus.BAD_REQUEST, "New displayName must be different than current.");
         }
 
         user.setDisplayName(newDisplayName);
@@ -130,16 +130,16 @@ public class UserService {
     public UserResponse changePassword(Long id, String currentRawPassword, String newRawPassword) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"));
+                        HttpStatus.NOT_FOUND, "User not found."));
 
         if (!encoder.matches(currentRawPassword, user.getPasswordHash())) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Password is incorrect");
+                    HttpStatus.BAD_REQUEST, "Password is incorrect.");
         }
 
         if (currentRawPassword.equals(newRawPassword)) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "New password must be different than current");
+                    HttpStatus.BAD_REQUEST, "New password must be different than current.");
         }
 
         user.setPasswordHash(encoder.encode(newRawPassword));
@@ -153,11 +153,11 @@ public class UserService {
     public UserResponse enableUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"));
+                        HttpStatus.NOT_FOUND, "User not found."));
 
         if (user.isEnabled()) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "User is already enabled");
+                    HttpStatus.BAD_REQUEST, "User is already enabled.");
         }
 
         user.enable();
@@ -170,11 +170,11 @@ public class UserService {
     public UserResponse disableUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"));
+                        HttpStatus.NOT_FOUND, "User not found."));
 
         if (!user.isEnabled()) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "User is already disabled");
+                    HttpStatus.BAD_REQUEST, "User is already disabled.");
         }
 
         user.disable();
@@ -187,11 +187,11 @@ public class UserService {
     public UserResponse addRole(Long id, Role role) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"));
+                        HttpStatus.NOT_FOUND, "User not found."));
 
         if (user.getRoles().contains(role)) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "User already has this role");
+                    HttpStatus.BAD_REQUEST, "User already has this role.");
         }
 
         user.addRole(role);
@@ -204,11 +204,11 @@ public class UserService {
     public UserResponse removeRole(Long id, Role role) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"));
+                        HttpStatus.NOT_FOUND, "User not found."));
 
         if (!user.getRoles().contains(role)) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "User does not have this role");
+                    HttpStatus.BAD_REQUEST, "User does not have this role.");
         }
 
         user.removeRole(role);
