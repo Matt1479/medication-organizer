@@ -113,7 +113,7 @@ public class Organizer {
     @Override
     public String toString() {
         return String.format(
-                "Organizer=[id=%s, productCode='%s', name='%s', daysCovered=%s, compartmentsPerDay=%s, description='%s', qrCode='%s', active=%s, createdAt=%s, updatedAt=%s]",
+                "Organizer[id=%s, productCode='%s', name='%s', daysCovered=%s, compartmentsPerDay=%s, description='%s', qrCode='%s', active=%s, createdAt=%s, updatedAt=%s]",
                 id, productCode, name, daysCovered, compartmentsPerDay, description, qrCode, active, createdAt,
                 updatedAt);
     }

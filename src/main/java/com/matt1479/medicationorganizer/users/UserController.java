@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.matt1479.medicationorganizer.security.CurrentUser;
-import com.matt1479.medicationorganizer.users.dto.ChangeDisplayNameRequest;
-import com.matt1479.medicationorganizer.users.dto.ChangeEmailRequest;
-import com.matt1479.medicationorganizer.users.dto.ChangePasswordRequest;
+import com.matt1479.medicationorganizer.users.dto.UpdateDisplayNameRequest;
+import com.matt1479.medicationorganizer.users.dto.UpdateEmailRequest;
+import com.matt1479.medicationorganizer.users.dto.UpdatePasswordRequest;
 import com.matt1479.medicationorganizer.users.dto.RoleRequest;
-import com.matt1479.medicationorganizer.users.dto.UserRequest;
+import com.matt1479.medicationorganizer.users.dto.CreateUserRequest;
 import com.matt1479.medicationorganizer.users.dto.UserResponse;
 
 import jakarta.validation.Valid;
@@ -41,7 +41,7 @@ public class UserController {
     }
 
     @PostMapping
-    public UserResponse createUser(@RequestBody @Valid UserRequest request) {
+    public UserResponse createUser(@RequestBody @Valid CreateUserRequest request) {
         return userService.createUser(
                 request.email(),
                 request.displayName(),
@@ -64,24 +64,24 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    @PatchMapping("/change-email")
-    public UserResponse changeEmail(@RequestBody @Valid ChangeEmailRequest request) {
+    @PatchMapping("/email")
+    public UserResponse changeEmail(@RequestBody @Valid UpdateEmailRequest request) {
         return userService.changeEmail(
                 currentUser.getId(),
                 request.currentPassword(),
                 request.newEmail());
     }
 
-    @PatchMapping("/change-display-name")
-    public UserResponse changeDisplayName(@RequestBody @Valid ChangeDisplayNameRequest request) {
+    @PatchMapping("/display-name")
+    public UserResponse changeDisplayName(@RequestBody @Valid UpdateDisplayNameRequest request) {
         return userService.changeDisplayName(
                 currentUser.getId(),
                 request.currentPassword(),
                 request.newDisplayName());
     }
 
-    @PatchMapping("/change-password")
-    public UserResponse changePassword(@RequestBody @Valid ChangePasswordRequest request) {
+    @PatchMapping("/password")
+    public UserResponse changePassword(@RequestBody @Valid UpdatePasswordRequest request) {
         return userService.changePassword(
                 currentUser.getId(),
                 request.currentPassword(),

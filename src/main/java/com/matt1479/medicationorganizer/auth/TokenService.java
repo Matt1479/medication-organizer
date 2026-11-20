@@ -60,7 +60,7 @@ public class TokenService {
         }
 
         throw new IllegalArgumentException(
-                "Authentication principal must be CustomUserDetails");
+                "Authentication principal must be CustomUserDetails.");
     }
 
 }
